@@ -40,16 +40,17 @@ allegedly, pretty nonstandard. Some of the system libraries, however, are requir
 Running the script
 ------------------
 
-Launch the script as it is in a debian based linux system,
+Launch the script in a debian based linux system (the commands `apt-get` and `wget` must exist),
 
 ```
 ./get-software.sh
 ```
 
-The installation is fully automated.
+The installation is fully automated and takes about 10 minutes.
 The script requires root privileges (`sudo`) for the system.
 The script creates a directory "software" under the current working directory,
 into which IPOPT and SCIP are downloaded, setup, and compiled.
+
 
 Testing the installation
 ------------------------
