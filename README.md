@@ -26,6 +26,8 @@ If you would like to install additional software inside the VM that require root
 - user name: **optimization**
 - password: **opti123**
 
+Please also see the **CHANGELOG** section further down for necessary updates of the VM.
+
 
 # get-software
 
