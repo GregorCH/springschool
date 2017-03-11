@@ -1,11 +1,11 @@
 #! /usr/bin/env bash
 
-systemlibs="build-essentials libreadline-dev libgmp-dev liblapack-dev libblas-dev libncurses-dev libzmq3-dev libcurl4-gnutls-dev libopenblas-dev zlib1g-dev"
+systemlibs="build-essential libreadline-dev libgmp-dev liblapack-dev libblas-dev libncurses-dev libzmq3-dev libcurl4-gnutls-dev libopenblas-dev zlib1g-dev"
 # get system packages
 essentialpythons="python-dev python-pip python3-numpy python3-matplotlib python-tk"
 compilers="gfortran g++"
 editors="kate vim emacs"
-miscs="git nodejs-legacy npm javascript-common Julia r-base"
+miscs="git nodejs-legacy npm javascript-common julia r-base"
 
 #
 # install all required system packages
@@ -16,7 +16,7 @@ do
     sudo apt-get install --assume-yes $pack
 done
 
-# 
+#
 # install some python2.7 libs. Using pip, we hope to get newer versions than by
 # downloading the apt-get equivalents python-numpy, python-virtualenv, etc.
 #
