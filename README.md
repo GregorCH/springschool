@@ -2,6 +2,31 @@
 
 Some Ressources and material for the [Spring School](http://optdata-springschool.com/index.php/en/) on Optimization and Data Science in Novi Sad.
 
+# Virtual Linux Environment
+
+For users with a Windows or Mac laptop, we recommend to download the [Linux Mint virtual environment](http://www.zib.de/hendel/download/Linux_Mint_18.1_xfce.ova),
+which you can load into, e.g., virtual box [as explained here](https://www.maketecheasier.com/import-export-ova-files-in-virtualbox/).
+
+The download size is about 2.2G!
+
+In the home-directory of the virtual machine user, a subdirectory "springschool" contains
+the prepared additional optimization software tools IPOPT and SCIP.
+
+Among other stuff, the virtual machine features:
+
+- optimization software packages IPOPT and SCIP, the latter precompiled with IPOPT
+- the optimization language Julia
+- Package managers pip, git, npm
+- Python site packages numpy, matplotlib, cython, and sklearn, ...
+- SCIP python interface PyScipOpt
+- Editors kate, vim, emacs
+
+If you would like to install additional software inside the VM that require root privileges, the **credentials** are
+
+- user name: **optimization**
+- password: **opti123**
+
+
 # get-software
 
 Bash Script to install system libraries, some site packages for Python
@@ -26,8 +51,8 @@ It is therefore pretty invasive.
 Updating the system packages (`sudo apt-get`) should be pretty safe. However, updating system python libraries may cause incompatibilities
 with existing python projects.
 
-For beginners, I recommend to
-use the downloadable [Linux Mint virtual environment](www.zib.de/hendel/download/Linux_Mint_18.1_xfce.ova),
+For Linux beginners, it is recommended to
+use the downloadable [Linux Mint virtual environment](http://www.zib.de/hendel/download/Linux_Mint_18.1_xfce.ova),
 which you can load into, e.g., virtual box like [so](https://www.maketecheasier.com/import-export-ova-files-in-virtualbox/).
 
 
