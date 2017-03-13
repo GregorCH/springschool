@@ -35,7 +35,9 @@ Bash Script to install system libraries, some site packages for Python
 and specific optimization software (IPOPT, SCIP, PySCIPOpt, Julia).
 
 Notes/CHANGELOG
------
+---------------
+
+- 2017/Mar/13 The previous link pointed to a wrong virtual machine. The link has not been changed, but the virtual machine now contains the required packages.
 
 - 2017/Mar/13 In an earlier version of the script, a typo prevented some packages from being installed. Either rerun the updated script,
 or install these packages manually using
@@ -115,7 +117,22 @@ SCIP>
 It is important that Ipopt appears in the list of external codes.
 You can then close this interactive shell by entering "quit", followed by the return key.
 
+Try also running
+```
+cd scip-svm; python run.py
+```
+You should see an output that is similar to
+```
+linear          : Accuracy 0.344
+sparselinear    : Accuracy 0.344
+sklearn         : Accuracy 0.965
+```
 
+Try
+```
+julia
+```
+after which you should see a welcome screen of the Julia language. You may close this terminal with ` CTRL+D` .
 
 
 
