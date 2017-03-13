@@ -16,11 +16,13 @@ do
     sudo apt-get install --assume-yes $pack
 done
 
+sudo -H pip install --upgrade pip
+sudo -H pip install setuptools
 #
 # install some python2.7 libs. Using pip, we hope to get newer versions than by
 # downloading the apt-get equivalents python-numpy, python-virtualenv, etc.
 #
-sudo pip install setuptools numpy scipy cython sklearn virtualenv matplotlib
+sudo -H pip install numpy scipy cython sklearn virtualenv matplotlib
 
 #
 # create a software directory
