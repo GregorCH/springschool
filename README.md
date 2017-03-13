@@ -37,6 +37,12 @@ and specific optimization software (IPOPT, SCIP, PySCIPOpt, Julia).
 Notes/CHANGELOG
 -----
 
+- 2017/Mar/13 In an earlier version of the script, a typo prevented some packages from being installed. Either rerun the updated script,
+or install these packages manually using
+```
+    sudo apt-get install git nodejs-legacy npm javascript-common julia r-base
+```
+
 - 2017/Mar/11 In an earlier version of the script, I misspelled the packages "julia" and "build-essential". Either rerun the updated script,
 or install these packages manually using
 ```

@@ -11,7 +11,7 @@ miscs="git nodejs-legacy npm javascript-common julia r-base"
 # install all required system packages
 #
 sudo apt-get update
-for pack in $systemlibs $essentialpythons $compilers $editors $misc
+for pack in $systemlibs $essentialpythons $compilers $editors $miscs
 do
     sudo apt-get install --assume-yes $pack
 done
