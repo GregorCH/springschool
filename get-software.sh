@@ -60,6 +60,7 @@ echo "R_LIBS=${HOME}/.local/R/" >> ~/.Renviron
 mkdir -p ~/.local/R
 R --save <<EOF
 install.packages(c('crayon', 'pbdZMQ', 'devtools'),repos = "http://cran.de.r-project.org")
+install.packages("mlr-org/mlrMBO")
 devtools::install_github(paste0('IRkernel/', c('repr', 'IRdisplay', 'IRkernel')))
 IRkernel::installspec()
 EOF
