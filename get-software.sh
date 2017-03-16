@@ -36,8 +36,8 @@ function installMxnet {
 # installs Jupyter Notebook together with Julia, SparQL, and R kernels
 #
 function installJupyterNotebook {
-#virtualenv jupyter-venv
-#source jupyter-venv/bin/activate
+virtualenv jupyter-venv
+source jupyter-venv/bin/activate
 
 git clone git://github.com/jupyter/notebook.git
 cd notebook
@@ -47,6 +47,7 @@ jupyter --version
 # Output: 4.0.6
 #install sparqlkernel
 pip install sparqlkernel
+# tensorflow
 pip install --upgrade tensorflow
 
 jupyter sparqlkernel install
@@ -63,13 +64,12 @@ devtools::install_github(paste0('IRkernel/', c('repr', 'IRdisplay', 'IRkernel'))
 IRkernel::installspec()
 EOF
 
-# tensorflow
-# pip install matplotlib
+pip install matplotlib
 
 #
 # leave virtual environment
 #
-#deactivate
+deactivate
 }
 
 function installScipIpoptPyscipopt {
@@ -145,7 +145,7 @@ cd software
 installJupyterNotebook
 
 # install the mxnet stuff
-installMxnet
+#installMxnet
 
 installScipIpoptPyscipopt
 
