@@ -84,6 +84,8 @@ ENV/
 
 # Spyder project settings
 .spyderproject
+.project
+.pydevproject
 
 # Rope project settings
 .ropeproject
