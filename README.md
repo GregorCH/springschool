@@ -37,6 +37,8 @@ and specific optimization software (IPOPT, SCIP, PySCIPOpt, Julia).
 Notes/CHANGELOG
 ---------------
 
+- 2017/Mar/16 Included Utz-Uwe Haus' hands-on exercise material in 'jupyter-notebooks' and updated the get-software script.
+
 - 2017/Mar/13 The previous link pointed to a wrong virtual machine. The link has not been changed, but the virtual machine now contains the required packages.
 
 - 2017/Mar/13 In an earlier version of the script, a typo prevented some packages from being installed. Either rerun the updated script,
