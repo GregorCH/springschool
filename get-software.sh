@@ -11,7 +11,6 @@ miscs="git nodejs-legacy npm javascript-common julia r-base"
 # install mx net
 #
 function installMxnet {
-
     # Clone mxnet repository. In terminal, run the commands WITHOUT "sudo"
     git clone https://github.com/dmlc/mxnet.git mxnet --recursive
 
@@ -143,11 +142,11 @@ cd software
 
 
 # install the Jupyter notebook stuff
-source installJupyterNotebook
+installJupyterNotebook
 
 # install the mxnet stuff
-source installMxnet
+installMxnet
 
-source installScipIpoptPyscipopt
+installScipIpoptPyscipopt
 
 source ~/.bashrc
