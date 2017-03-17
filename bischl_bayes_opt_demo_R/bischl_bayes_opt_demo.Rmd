@@ -1,0 +1,183 @@
+---
+title: "mlrMBO Bayesian Optimization Demo"
+author: "Bernd Bischl"
+output: pdf_document
+---
+
+```{r}
+
+
+### HOW TO RUN THIS
+### 1) Install R
+### https://cran.r-project.org/
+### 2) Optional: Use your favorite editor (vim?) or download RStudio
+### https://www.rstudio.com/
+### 3) Install some R packages you need. You can click in RStudio or run this in R
+### install.packages("mlrMBO")
+
+
+library(mlrMBO) # Bayesian Optimization in R
+library(ParamHelpers) # Objects for parameter spaces
+library(smoof) # Interface for objective functions
+library(mlr) # Machine learning in R
+#omit some of the learner output now or it gets messy
+configureMlr(on.learner.warning = "quiet", show.learner.output = FALSE) 
+set.seed(2)
+# NOTE: I am running all optimization with VERY few evals to reduce time and log output!!!
+iters = 5 
+
+### Synthetic test functions ###
+
+branin = makeBraninFunction() # https://www.sfu.ca/~ssurjano/branin.html
+print(branin)
+plot2DNumeric(branin, show.optimum = TRUE, render.levels = TRUE)
+
+par.set = getParamSet(branin)
+print(par.set)
+
+## Branin function by hand, now on log scale, looks nicer ###
+
+branin.custom = fn = makeSingleObjectiveFunction(
+  name = "branin.custom",
+  fn = function(x) log((x[2] - (5.1 / (4 * pi^2)) * x[1]^2 + (5 / pi) * x[1] - 6)^2 + 
+    10 * (1 - (1 / (8 * pi))) * cos(x[1]) + 10),
+  par.set = makeParamSet(
+    makeNumericParam("x1", lower = -5, upper = 10),
+    makeNumericParam("x2", lower = 0, upper = 15)),
+  noisy = FALSE, # no random error on function evaluations
+  has.simple.signature = TRUE, # all inputs are of the same type
+)
+
+plot2DNumeric(branin.custom, show.optimum = TRUE, render.levels = TRUE)
+
+## Bayesian optimization with mlrMBO ##
+
+ctrl = makeMBOControl()
+ctrl = setMBOControlTermination(ctrl, iters = iters) #run MBO for few iters
+
+# use (lower) confidence bound with lambda=1 as Infill criterion
+infill.crit = makeMBOInfillCritCB(cb.lambda = 1) 
+ctrl = setMBOControlInfill(ctrl, crit = infill.crit)
+
+des = generateDesign(n = 5L, par.set = getParamSet(branin.custom), fun = lhs::randomLHS)
+print(des)
+
+# this would create the a surrogate manually with mlr
+surrogate = makeLearner("regr.km", predict.type = "se")
+# but mbo can also construct this internally with some smarter defaults for more stability
+
+# Example Run is useful to visualize 1 or 2 dimensional problems and explain the usage of mbo
+run = exampleRun(branin.custom, design = des, control = ctrl)
+
+print(run)
+print(run$mbo.res)
+plotExampleRun(run, iter = 5, pause = FALSE) # leave out "iter", "pause" for animation
+
+# "real" mbo run with the function mbo()
+
+res = mbo(branin.custom, design = des, learner = surrogate, control = ctrl)
+print(res)
+res$y # best found value of objective function
+res$x # best configuration
+print(as.data.frame(res$opt.path)) # full access to all results
+
+# mbo uses smart defaults for the surrogate model and design
+
+res = mbo(branin.custom, control = ctrl)
+
+#Sensible surrogate model is created internally with makeMBOLearner() dependent on the problem
+makeMBOLearner(ctrl, branin.custom)
+
+
+### Usecase: Tuning a machine learning model with MBO ###
+
+# Optimize a rbf-SVM on the sonar classification problem. 
+# Tune cost and gamma parameter on logscale
+
+par.set = makeParamSet(
+  makeNumericParam("cost", -15, 15, trafo = function(x) 2^x),
+  makeNumericParam("gamma", -15, 15, trafo = function(x) 2^x)
+)
+
+task = sonar.task
+
+svm = makeSingleObjectiveFunction(name = "svm.tuning",
+  fn = function(x) {
+    lrn = makeLearner("classif.svm", par.vals = x)
+    crossval(lrn, task, iters = 2, show.info = FALSE)$aggr
+  },
+  par.set = par.set,
+  noisy = TRUE,
+  has.simple.signature = FALSE,
+  minimize = TRUE
+)
+
+ctrl = makeMBOControl()
+ctrl = setMBOControlTermination(ctrl, iters = iters)
+ctrl = setMBOControlInfill(ctrl, crit = makeMBOInfillCritCB())
+
+res = mbo(svm, control = ctrl)
+print(res)
+
+# This is also directly implemented in mlr
+tune.ctrl = makeTuneControlMBO(mbo.control = ctrl, budget = 10L)
+res = tuneParams(makeLearner("classif.svm"), task, cv5, mmce, par.set, tune.ctrl)
+
+### Noisy optimization ###
+# The SVM resampling is noisy so we should adapt a little bit
+
+# do 5 evaluation on the configuration with the best predicted value
+ctrl = makeMBOControl(final.method = "best.predicted", final.evals = 5L) 
+ctrl = setMBOControlInfill(ctrl, crit = makeMBOInfillCritEQI()) # use expected quantile improvement
+ctrl = setMBOControlTermination(ctrl, iters = iters)
+
+mbo(svm, control = ctrl)
+
+### Parallelization ###
+
+library(parallelMap)
+
+ncpus = 2L
+
+# Parallel evaluation of resampling
+parallelStartMulticore(cpus = ncpus, level = "mlr.resample") # For Windows: parallelStartSocket()
+res = mbo(svm, control = ctrl) # we call mlr::resample in the svm function
+parallelStop()
+
+
+# Multi point proposal
+ctrl = makeMBOControl(propose.points = ncpus) # propose ncpus points in each iteration
+ctrl = setMBOControlTermination(ctrl, max.evals = 12L) # overall number of evaluations
+ctrl = setMBOControlInfill(ctrl, crit = makeMBOInfillCritEI())
+ctrl = setMBOControlMultiPoint(ctrl, method = "cl", cl.lie = min) # use constant liar 
+
+parallelStartMulticore(cpus = ncpus)
+res = mbo(svm, control = ctrl)
+parallelStop()
+
+### Multi-objective Bayesian optimization###
+# If we want to tune multiple objectives at once
+
+svm.multi = makeMultiObjectiveFunction(name = "svm.multiobj",
+  fn = function(x) {
+    lrn = makeLearner("classif.svm", par.vals = x)
+    # tune missclassifcation and runtime together
+    crossval(lrn, task, iters = 2, measures = list(mmce, timetrain), show.info = FALSE)$aggr 
+  },
+  n.objectives = 2L,
+  par.set = par.set,
+  has.simple.signature = FALSE,
+  minimize = c(TRUE, TRUE)
+)
+
+ctrl = makeMBOControl(n.objectives = 2L)
+ctrl = setMBOControlTermination(ctrl, iters = iters)
+ctrl = setMBOControlMultiObj(ctrl, method = "parego")
+res = mbo(svm.multi, control = ctrl)
+print(res)
+res$pareto.front
+res$pareto.set
+
+```
+
+
