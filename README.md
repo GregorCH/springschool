@@ -2,6 +2,14 @@
 
 Some Ressources and material for the [Spring School](http://optdata-springschool.com/index.php/en/) on Optimization and Data Science in Novi Sad.
 
+This repository contains the material used during the hands-on sessions of the summer school in sub-directories:
+
+- scip-svm : The exercise material for learning sparse support vector machines with SCIP by Ambros Gleixner and myself
+- jupyter-notebooks : Several Jupyter notebooks with examples for SparQL, TensorFlow, etc. by Utz-Uwe Haus
+- bischl_bayes_opt_demo_R : R demo for bayesian optimization and algorithm configuration by Bernd Bischl
+
+Please consult the [spring school materials](http://optdata-springschool.com/index.php/en/materials) for slides and additional information about the different exercises.
+
 # Virtual Linux Environment
 
 For users with a Windows or Mac laptop, we recommend to download the [Linux Mint virtual environment](http://www.zib.de/hendel/download/Linux_Mint_18.1_xfce.ova),
