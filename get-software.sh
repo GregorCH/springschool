@@ -63,11 +63,6 @@ install.packages(c("mlrMBO", "DiceKriging", "rgenoud", "gridExtra", "e1071"))
 devtools::install_github(paste0('IRkernel/', c('repr', 'IRdisplay', 'IRkernel')))
 IRkernel::installspec()
 EOF
-
-#
-# leave virtual environment
-#
-deactivate
 }
 
 #
