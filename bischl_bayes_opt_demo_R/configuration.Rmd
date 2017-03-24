@@ -1,0 +1,165 @@
+---
+title: "mlrMBO Bayesian Optimization Demo"
+author: "Bernd Bischl"
+output: pdf_document
+---
+
+```{r}
+
+
+### HOW TO RUN THIS
+### 1) Install R
+### https://cran.r-project.org/
+### 2) Optional: Use your favorite editor (vim?) or download RStudio
+### https://www.rstudio.com/
+### 3) Install some R packages you need. You can click in RStudio or run this in R
+### install.packages("mlrMBO")
+
+
+library(mlrMBO) # Bayesian Optimization in R
+library(ParamHelpers) # Objects for parameter spaces
+library(smoof) # Interface for objective functions
+library(mlr) # Machine learning in R
+#omit some of the learner output now or it gets messy
+configureMlr(on.learner.warning = "quiet", show.learner.output = FALSE)
+set.seed(2)
+# NOTE: I am running all optimization with VERY few evals to reduce time and log output!!!
+iters = 5
+
+
+### Mixed space optimization###
+
+
+# expand the parameter set from the last tutorial with additional kernel and
+# degree parameter. This results in a parameter set with a discrete parameter `kernel`
+# and dependencies, e.g. `polynomial` has only a meaning for polyonmial kernel.
+par.set = makeParamSet(
+  makeNumericParam("cost", -15, 15, trafo = function(x) 2^x),
+  makeNumericParam("gamma", -15, 15, trafo = function(x) 2^x, requires = quote(kernel == "radial")),
+  makeIntegerParam("degree", lower = 1, upper = 4, requires = quote(kernel == "polynomial")),
+  makeDiscreteParam("kernel", values = c("radial", "polynomial", "linear"))
+)
+
+task = sonar.task
+
+svm = makeSingleObjectiveFunction(name = "svm.tuning",
+  fn = function(x) {
+    x = x[!vlapply(x, is.na)] #remove inactive parameters coded with `NA`
+    lrn = makeLearner("classif.svm", par.vals = x)
+    crossval(lrn, task, iters = 2, show.info = FALSE)$aggr
+  },
+  par.set = par.set,
+  noisy = TRUE,
+  has.simple.signature = FALSE,
+  minimize = TRUE
+)
+
+ctrl = makeMBOControl()
+ctrl = setMBOControlTermination(ctrl, iters = iters)
+
+#Because of the above mentioned structur of the parameter set, kriging is not a suitable
+#surrogate anymore. we use a random Forest with imputation for non-activ parameters
+makeMBOLearner(ctrl, svm)
+
+res = mbo(svm, control = ctrl)
+print(res)
+res$x
+res$y
+op = as.data.frame(res$opt.path)
+plot(cummin(op$y), type = "l", ylab = "mmce", xlab = "iteration")
+
+
+## Usecase: Pipeline configuration
+# We can also tune a machine learning pipeline, i.e., preprocessing + model selection.
+# Our example pipeline is:
+#   1. Feature filtering based on an anova test or covariance, such that between 50% and 100% of
+#      the feature remain
+#   2. Select either a svm or a naive bayes classifier
+#   3. Tune parameters of the selected classifier
+
+par.set = makeParamSet(
+  makeDiscreteParam("fw.method", values = c("anova.test", "variance")),
+  makeNumericParam("fw.perc", lower = 0.1, upper = 1),
+  makeDiscreteParam("selected.learner", values = c("classif.svm", "classif.naiveBayes")),
+  makeNumericParam("classif.svm.cost", -15, 15, trafo = function(x) 2^x,
+    require = quote(selected.learner == "classif.svm")),
+  makeNumericParam("classif.svm.gamma", -15, 15, trafo = function(x) 2^x,
+    requires = quote(classif.svm.kernel == "radial" & selected.learner == "classif.svm")),
+  makeIntegerParam("classif.svm.degree", lower = 1, upper = 4,
+    requires = quote(classif.svm.kernel == "polynomial" & selected.learner == "classif.svm")),
+  makeDiscreteParam("classif.svm.kernel", values = c("radial", "polynomial", "linear"),
+    require = quote(selected.learner == "classif.svm"))
+)
+
+pipeline = makeSingleObjectiveFunction(name = "pipeline.configuration",
+  fn = function(x) {
+    x = x[!vlapply(x, is.na)] #remove inactive parameters coded with `NA`
+    lrn = makeFilterWrapper(makeModelMultiplexer(list("classif.svm", "classif.naiveBayes")))
+    lrn = setHyperPars(lrn, par.vals = x)
+    crossval(lrn, task, iters = 2, show.info = FALSE)$aggr
+  },
+  par.set = par.set,
+  noisy = TRUE,
+  has.simple.signature = FALSE,
+  minimize = TRUE
+)
+
+ctrl = makeMBOControl()
+ctrl = setMBOControlTermination(ctrl, iters = iters)
+
+res = mbo(pipeline, control = ctrl)
+
+# This type of optimization is still directly supported in mlr
+lrn = makeFilterWrapper(makeModelMultiplexer(list("classif.svm", "classif.naiveBayes")))
+tune.ctrl = makeTuneControlMBO(mbo.control = ctrl, budget = 10L)
+res = tuneParams(lrn, task, cv5, mmce, par.set, tune.ctrl)
+print(res)
+res$x
+res$y
+op = as.data.frame(res$opt.path)
+plot(cummin(op$mmce.test.mean), type = "l", ylab = "mmce", xlab = "iteration")
+
+
+## Usecase: Algorithm configuration
+# Configure GenSA (`help(GenSA)`) on three different five-dimensional multimodal test-functions:
+# "Alpine N. 1", "Deflected Corrugated Spring" and "Griewank".
+# The objective value of these functions have a similar scale so the overall performance
+# is defined as the sum over all three reached values.
+
+library(GenSA)
+
+# The parameter set is defined such that the optimization runs quite fast
+par.set = makeParamSet(
+  makeIntegerParam("maxit", lower = 1, upper = 5000),
+  makeNumericParam("threshold.stop", lower = -1, upper = 5),
+  makeIntegerParam("nb.stop.improvement", lower = 1, upper = 50),
+  makeNumericParam("temperature", lower = 0, upper = 1),
+  makeNumericParam("visiting.param", lower = 0, upper = 1),
+  makeNumericParam("acceptance.param", lower = 0, upper = 1)
+)
+
+config.GenSA = makeSingleObjectiveFunction("GenSA.configuration",
+  fn = function(x) {
+    tfs = makeFunctionsByName(c("Alpine N. 1", "Deflected Corrugated Spring", "Griewank"),
+      dimensions = 5L)
+    obj.vals = vnapply(tfs, function(tf) {
+      ps = getParamSet(tf)
+      GenSA(fn = tf, lower = getLower(ps), upper = getUpper(ps), control = x)$value
+    })
+    return(sum(obj.vals))
+  },
+  par.set = par.set,
+  has.simple.signature = FALSE,
+  minimize = TRUE
+)
+
+
+ctrl = makeMBOControl()
+ctrl = setMBOControlTermination(ctrl, iters = iters)
+
+des = generateDesign(n = 10L, par.set = par.set)
+res = mbo(config.GenSA, design = des, control = ctrl)
+print(res)
+
+```
+
