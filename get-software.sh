@@ -5,7 +5,7 @@ systemlibs="build-essential libreadline-dev libgmp-dev liblapack-dev libblas-dev
 essentialpythons="python-dev python-pip python3-numpy python3-matplotlib python-tk"
 compilers="gfortran g++"
 editors="kate vim emacs"
-miscs="git nodejs-legacy npm javascript-common julia r-base"
+miscs="git nodejs-legacy npm javascript-common r-base gdebi"
 
 #
 # install mx net
@@ -36,21 +36,20 @@ function installMxnet {
 # installs Jupyter Notebook together with Julia, SparQL, and R kernels
 #
 function installJupyterNotebook {
-virtualenv jupyter-venv
-source jupyter-venv/bin/activate
 
 git clone git://github.com/jupyter/notebook.git
 cd notebook
-pip install --pre -e .
+pip install --user --pre -e .
 
 jupyter --version
 # Output: 4.0.6
 #install sparqlkernel
-pip install sparqlkernel
-# tensorflow
-pip install --upgrade tensorflow
+pip install sparqlkernel --user
+jupyter sparqlkernel install --user
 
-jupyter sparqlkernel install
+# tensorflow
+pip install --upgrade tensorflow --user
+
 # install julia
 julia <<EOF
 Pkg.add("IJulia")
@@ -60,17 +59,25 @@ echo "R_LIBS=${HOME}/.local/R/" >> ~/.Renviron
 mkdir -p ~/.local/R
 R --save <<EOF
 install.packages(c('crayon', 'pbdZMQ', 'devtools'),repos = "http://cran.de.r-project.org")
-install.packages("mlr-org/mlrMBO")
+install.packages(c("mlrMBO", "DiceKriging", "rgenoud", "gridExtra", "e1071"))
 devtools::install_github(paste0('IRkernel/', c('repr', 'IRdisplay', 'IRkernel')))
 IRkernel::installspec()
 EOF
-
-pip install matplotlib
 
 #
 # leave virtual environment
 #
 deactivate
+}
+
+#
+# download and install R studio
+#
+function installRStudio {
+    mkdir rstudio
+    cd rstudio
+    wget https://download1.rstudio.org/rstudio-1.0.136-amd64.deb
+    sudo gdebi -n rstudio--1.0.136-amd64.deb
 }
 
 function installScipIpoptPyscipopt {
@@ -131,9 +138,7 @@ sudo -H pip install setuptools
 # install some python2.7 libs. Using pip, we hope to get newer versions than by
 # downloading the apt-get equivalents python-numpy, python-virtualenv, etc.
 #
-sudo -H pip install numpy scipy cython sklearn virtualenv matplotlib
-
-#
+pip install --user numpy scipy cython sklearn virtualenv matplotlib
 
 #
 # create a software directory
@@ -146,8 +151,10 @@ cd software
 installJupyterNotebook
 
 # install the mxnet stuff
-#installMxnet
+installMxnet
 
 installScipIpoptPyscipopt
+
+installRStudio
 
 source ~/.bashrc
